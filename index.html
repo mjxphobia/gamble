@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+<title>골목길 사주 노점</title>
+<style>
+  :root {
+    --bg:#000;
+    --fg:#f5f5f5;
+    --accent:#d4af37; /* 금색 */
+    --border:#333;
+  }
+
+  *{box-sizing:border-box}
+  html,body {
+    margin:0; padding:0;
+    background:var(--bg); color:var(--fg);
+    font-family:"Pretendard","Noto Sans KR",sans-serif;
+    text-align:center;
+  }
+
+  section {
+    display:none;
+    min-height:100vh;
+    padding:24px;
+    box-sizing:border-box;
+    flex-direction:column;
+    justify-content:center;
+    align-items:center;
+    gap:12px;
+  }
+  section.active { display:flex; }
+
+  img, video {
+    display:block;
+    margin:0 auto 16px;
+    width:80%;
+    max-width:480px;        /* ✅ PC에서도 과대하지 않게 */
+    border-radius:12px;
+    height:auto;
+    object-fit:contain;
+  }
+
+  h1,p { margin:8px 0; line-height:1.6; }
+  p { color:#ccc; font-size:1.05rem; }
+
+  input {
+    padding:12px 16px;
+    font-size:1.1rem;
+    border:2px solid var(--accent);
+    border-radius:10px;
+    background:#111;
+    color:var(--fg);
+    text-align:center;
+    outline:none;
+    margin-top:4px;
+    width:70%;
+    max-width:300px;
+  }
+
+  .btns {
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:12px;
+    margin-top:10px;
+  }
+
+  button {
+    background:var(--accent);
+    color:#000;
+    border:none;
+    border-radius:999px;
+    padding:14px 26px;
+    font-size:1.05rem;
+    font-weight:800;
+    cursor:pointer;
+    transition:.15s;
+  }
+  button:hover {filter:brightness(1.1);}
+  button:active {transform:scale(.97);}
+  .gold {color:var(--accent);}
+
+  @media (max-width:480px){
+    input{width:90%;}
+    button{width:80%;max-width:320px;}
+  }
+
+  /* ================================
+     📜 사주 ‘전통 책’ 스타일
+  =================================*/
+  .book-wrap{
+    position:relative;
+    width:min(92vw, 720px);
+    margin:0 auto;
+    aspect-ratio: 16 / 10;
+    background:url("static/book-open.png") center/contain no-repeat;
+    display:grid;
+    place-items:center;
+  }
+  .pages{
+    position:absolute;
+    inset:8% 6%;
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:12px;
+  }
+  .page{
+    position:relative;
+    border-radius:8px;
+    overflow:hidden;
+    box-shadow: inset 0 0 0 1px rgba(0,0,0,.15);
+    background:#f7f2e7;
+  }
+  .page::before{
+    content:"";
+    position:absolute; inset:0;
+    background:url("static/hanji.jpg") center/cover no-repeat;
+    opacity:.35;
+    pointer-events:none;
+  }
+  .page-inner{
+    position:relative;
+    padding:16px 18px;
+    height:100%;
+    display:flex; flex-direction:column; justify-content:center; align-items:center;
+    color:#2b2b2b;
+  }
+  .seal{
+    position:absolute; right:12px; bottom:10px;
+    color:#9b1c1c; font-weight:900; font-size:.95rem; opacity:.9;
+    transform:rotate(-8deg);
+  }
+  .title-calligraphy{
+    font-weight:900; letter-spacing:.08em; margin-bottom:6px;
+    color:#1f1f1f;
+  }
+  .fortune-line{ font-size:1rem; color:#333; margin:.2rem 0; }
+  .divider{ width:22px; height:2px; background:#a41; margin:8px auto; opacity:.6; }
+  .note{ font-size:.9rem; color:#444; opacity:.85; }
+
+  /* ★ 숨김 유틸 */
+  .hidden { display:none !important; }
+</style>
+</head>
+<body>
+
+<!-- 1) 첫 화면 -->
+<section id="page-start" class="active">
+  <!-- ★ 추가: 상단 이미지 -->
+  <img src="static/fate.png" alt="사주팔자"> <!-- ★ 수정 -->
+  <p>자네, 사주를 보러왔나?<br>주민번호 앞자리를 입력하면 내 인생팔자 다~알려주겠네.</p>
+  <input id="birthInput" type="text" placeholder="입력하기" maxlength="6" inputmode="numeric"/>
+  <div class="btns">
+    <button id="birthBtn">입력하기</button>
+  </div>
+</section>
+
+<!-- 2) 사주 화면 (📜 전통 책 스타일) -->
+<section id="page-fortune">
+  <h1 class="gold" style="margin-bottom:6px;">📜 사주풀이</h1>
+
+  <div class="book-wrap">
+    <div class="pages">
+      <div class="page">
+        <div class="page-inner">
+          <div class="title-calligraphy">명식 요지</div>
+          <div class="divider"></div>
+          <div id="fortuneLeft" class="fortune-line">—</div>
+          <div class="note" id="fortuneLeftSub">—</div>
+          <div class="seal">吉</div>
+        </div>
+      </div>
+      <div class="page">
+        <div class="page-inner">
+          <div class="title-calligraphy">오늘의 기류</div>
+          <div class="divider"></div>
+          <div id="fortuneRight1" class="fortune-line">—</div>
+          <div id="fortuneRight2" class="fortune-line">—</div>
+          <div class="note" id="fortuneRightNote">—</div>
+          <div class="seal">運</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btns" style="margin-top:10px;">
+    <button onclick="show('page-start')">다른 질문 하러가기</button>
+  </div>
+</section>
+
+<!-- 3) 도박 change -->
+<section id="page-gamble-change">
+  <video id="vid-change" src="static/change.mp4" autoplay muted playsinline></video>
+  <div class="btns">
+    <button id="btn-change-next" class="hidden" onclick="show('page-what')">????</button> <!-- ★ 재생 끝나야 표시 -->
+  </div>
+</section>
+
+<!-- 4) 무엇이 필요한가 -->
+<section id="page-what">
+  <img src="static/what-do-you-want.png" alt="무엇이 필요한가">
+  <div class="btns">
+    <button onclick="show('page-oddeven1')">사람</button>
+    <button onclick="show('page-cup1')">물건</button>
+  </div>
+  <p>을 찾습니다.</p>
+</section>
+
+<!-- 홀짝1 -->
+<section id="page-oddeven1">
+  <img src="static/oddeven1-hatcolor.png" alt="">
+  <div class="btns">
+    <!-- ★ 정답 분기 수정 -->
+    <button onclick="show('page-oddeven1-wrong')">빨간색</button>  <!-- 빨간색 → 오답 화면 -->
+    <button onclick="show('page-oddeven2')">검정색</button>        <!-- 검정색 → 다음 -->
+  </div>
+</section>
+
+<!-- ★ 홀짝1 오답 화면 추가 -->
+<section id="page-oddeven1-wrong">
+  <img src="static/oddeven3-1-wrong.png" alt="오답">
+  <div class="btns">
+    <button onclick="show('page-oddeven1')">다시 말하기</button>
+  </div>
+</section>
+
+<!-- 홀짝2 -->
+<section id="page-oddeven2">
+  <img src="static/oddeven2-beard.png" alt="">
+  <div class="btns">
+    <button onclick="show('page-oddeven3-2')">네</button>
+    <!-- ★ 아니요 → 오답 화면(다시 말하기로 복귀) -->
+    <button onclick="show('page-oddeven2-wrong')">아니요</button>
+  </div>
+</section>
+
+<!-- ★ 홀짝2 오답 화면 추가 -->
+<section id="page-oddeven2-wrong">
+  <img src="static/oddeven3-1-wrong.png" alt="오답">
+  <div class="btns">
+    <button onclick="show('page-oddeven2')">다시 말하기</button>
+  </div>
+</section>
+
+<!-- 홀짝3-2 (정답 흐름) -->
+<section id="page-oddeven3-2">
+  <img src="static/oddeven3-2-right.png" alt="">
+  <div class="btns">
+    <button onclick="show('page-oddeven4-1')">네</button>
+    <button onclick="show('page-scared-odd')">아니요</button>
+  </div>
+</section>
+
+<!-- 틀렸을 때 공포 -->
+<section id="page-scared-odd">
+  <img src="static/scared.png" alt="">
+  <div class="btns"><button onclick="show('page-oddeven4-1')">하겠습니다</button></div>
+</section>
+
+<!-- 홀짝4-1 -->
+<section id="page-oddeven4-1">
+  <video id="vid-odd-41" src="static/oddeven4-1-first.mp4" autoplay muted playsinline></video>
+  <div id="btns-odd-41" class="btns hidden"><!-- ★ 10초 뒤 표시 -->
+    <button onclick="checkOdd(0)">홀</button>
+    <button onclick="checkOdd(1)">짝</button>
+    <button onclick="checkOdd(2)">없음</button>
+  </div>
+</section>
+
+<!-- 홀짝4-2 -->
+<section id="page-oddeven4-2">
+  <video id="vid-odd-42" src="static/oddeven4-1-retry.mp4" autoplay muted playsinline></video>
+  <div id="btns-odd-42" class="btns hidden"><!-- ★ 8초 뒤 표시 -->
+    <button onclick="checkRetry(0)">홀</button>
+    <button onclick="checkRetry(1)">짝</button>
+    <button onclick="checkRetry(2)">없음</button>
+  </div>
+</section>
+
+<!-- 홀짝4-3 (모두 정답) -->
+<section id="page-oddeven4-3">
+  <video id="vid-odd-43" src="static/oddeven4-1-oilnam.mp4" autoplay muted playsinline></video>
+  <div id="btns-odd-43" class="btns hidden"><!-- ★ 4초 뒤 표시 -->
+    <button onclick="show('page-oddeven5')">짝</button>
+    <button onclick="show('page-oddeven5')">짝</button>
+    <button onclick="show('page-oddeven5')">짝</button>
+  </div>
+</section>
+
+<!-- 홀짝5 -->
+<section id="page-oddeven5">
+  <img src="static/oddeven5-trash.png" alt="">
+  <button onclick="show('page-start')">처음으로</button>
+</section>
+
+<!-- 야바위1 -->
+<section id="page-cup1">
+  <img src="static/cup1-what.png" alt="">
+  <input id="cupInput" type="text" placeholder="...을 찾고 있습니다.">
+  <div class="btns"><button id="cupBtn">입력하기</button></div>
+</section>
+
+<!-- 야바위2 (정답) -->
+<section id="page-cup2-right">
+  <img src="static/cup2-1-right.png" alt="">
+  <div class="btns">
+    <button onclick="show('page-cup3')">네</button>
+    <button onclick="show('page-scared-cup')">아니요</button>
+  </div>
+</section>
+
+<!-- 야바위 오답 -->
+<section id="page-cup2-wrong">
+  <img src="static/cup2-1-wrong.png" alt="">
+  <button onclick="show('page-cup1')">다시 말하기</button>
+</section>
+
+<!-- scared -->
+<section id="page-scared-cup">
+  <img src="static/scared.png" alt="">
+  <button onclick="show('page-cup3')">하겠습니다</button>
+</section>
+
+<!-- 야바위3 -->
+<section id="page-cup3">
+  <video id="vid-cup3" src="static/cup3.mp4" autoplay muted playsinline></video>
+  <div id="btns-cup3" class="btns hidden"><!-- ★ 10초 뒤 표시 -->
+    <button onclick="show('page-cup4')">왼쪽</button>
+    <button onclick="show('page-cup4')">가운데</button>
+    <button onclick="show('page-cup4')">오른쪽</button>
+  </div>
+</section>
+
+<!-- 야바위4 -->
+<section id="page-cup4">
+  <img src="static/cup4.png" alt="">
+  <button onclick="show('page-start')">처음으로</button>
+</section>
+
+<script>
+function show(id){
+  document.querySelectorAll('section').forEach(s=>s.classList.remove('active'));
+  const sec = document.getElementById(id);
+  sec.classList.add('active');
+  window.scrollTo(0,0);
+
+  // ★ 비디오 뒤 버튼 지연/끝 이벤트 세팅
+  if(id === 'page-gamble-change'){
+    const v = document.getElementById('vid-change');
+    const btn = document.getElementById('btn-change-next');
+    btn.classList.add('hidden');
+    // ended 후 표시
+    const onEnd = ()=>{ btn.classList.remove('hidden'); v.removeEventListener('ended', onEnd); };
+    v.addEventListener('ended', onEnd);
+    v.play().catch(()=>{}); // iOS 대응
+  }
+
+  if(id === 'page-oddeven4-1'){
+    delayButtonsBy('vid-odd-41','btns-odd-41', 10000); // 10초
+  }
+  if(id === 'page-oddeven4-2'){
+    delayButtonsBy('vid-odd-42','btns-odd-42', 8000);  // 8초
+  }
+  if(id === 'page-oddeven4-3'){
+    delayButtonsBy('vid-odd-43','btns-odd-43', 4000);  // 4초
+  }
+  if(id === 'page-cup3'){
+    delayButtonsBy('vid-cup3','btns-cup3', 10000);     // 10초
+  }
+}
+
+function delayButtonsBy(videoId, btnsId, ms){
+  const v = document.getElementById(videoId);
+  const c = document.getElementById(btnsId);
+  c.classList.add('hidden');
+  const startTimer = ()=>{
+    setTimeout(()=> c.classList.remove('hidden'), ms);
+  };
+  if (v.readyState >= 2) { // 데이터 준비됨
+    v.play().catch(()=>{});
+    startTimer();
+  } else {
+    v.addEventListener('loadeddata', ()=>{
+      v.play().catch(()=>{});
+      startTimer();
+    }, { once:true });
+  }
+}
+
+/* ── 첫 화면: 주민번호 입력 버튼 핸들링 ── */
+document.getElementById('birthBtn').addEventListener('click', ()=>{
+  const val = document.getElementById('birthInput').value.trim();
+  if(val === '7777'){ show('page-gamble-change'); return; }
+  if(/^\d{6}$/.test(val)){
+    const y=parseInt(val.slice(0,2),10),
+          m=parseInt(val.slice(2,4),10),
+          d=parseInt(val.slice(4,6),10);
+    const fullY = y<=25 ? 2000+y : 1900+y;
+    const date = new Date(fullY,m-1,d);
+    const today=new Date();
+    const min=new Date(1908,5,8); // 1908-06-08
+    if(date<today && date>=min){ showFortune(val); return; }
+  }
+  alert("올바른 형식으로 입력해주세요.");
+});
+
+/* ── 📜 사주(결과 고정 + 랜덤 보이게) ── */
+const bankLeft = [
+  "목화통명으로 성장운이 왕성하다.","금수상생, 배움의 길이 트인다.","토금금왕, 현실 감각이 또렷하다.",
+  "수목상생, 인간관계가 열릴 조짐.","화토상극, 서두르지 말라.","금수상극, 욕심을 덜면 복이 온다.",
+  "수토구족, 작은 것에 충실하라.","목금쟁합, 협업에 길하다.","목토상생, 뿌리가 단단해진다.","수화기제, 균형을 지켜라."
+];
+const bankLeftSub = [
+  "오늘은 말보다 실천이 복을 싣는다.","낯선 제안도 한 번은 들어볼 만하다.","오후에 반가운 연락이 온다.",
+  "발걸음이 가벼운 날.","지출에 주의할 것.","단호하지만 따뜻하게.",
+  "작지만 확실한 변화.","집중하라, 길이 보인다.","운은 준비된 자에게.","삶의 리듬을 느껴라."
+];
+const bankRight = [
+  "작은 행운이 들어오니 기회를 놓치지 말라.","과거의 일로 칭찬을 듣는다.","기다리던 소식이 들릴 듯하다.",
+  "지인과의 약속이 복이 된다.","낯선 길에도 길은 있다.","억지로 끌지 말고 흘러가라.",
+  "마음이 머무는 곳을 따라가라.","겸손이 재물을 부른다.","연락을 미루지 말라.","좋은 귀인과 인연이 있다."
+];
+const bankRight2 = [
+  "북쪽보다는 동쪽이 길하다.","부드러운 말이 성과를 낳는다.","작은 선물이 행운을 부른다.",
+  "빨간색보다 검정이 어울린다.","새 신발은 내일 사도 늦지 않다.","계획을 적으면 힘이 생긴다.",
+  "약속은 반드시 지켜라.","환한 조명이 행운을 부른다.","문서 운이 있다.","오전보다 오후가 좋다."
+];
+const bankNote = [
+  "귀가 얇아지지 말라.","겸손하되 당당하라.","웃음이 복을 데려온다.","작은 배려가 큰 인연이 된다.",
+  "약속을 지키면 문이 열린다.","과한 자신감은 독이 된다.","감사 인사를 잊지 말라.",
+  "리듬을 잃지 마라.","먼저 손 내밀라.","오늘의 선택이 내일을 부른다."
+];
+
+function seededIndex(seedStr, base){
+  const h = Array.from(seedStr).reduce((a,c)=>a + c.charCodeAt(0), 0);
+  return h % base;
+}
+function showFortune(seed){
+  const i1 = seededIndex(seed, bankLeft.length);
+  const i2 = seededIndex(seed.split('').reverse().join(''), bankLeftSub.length);
+  const i3 = seededIndex(seed+'x', bankRight.length);
+  const i4 = seededIndex('y'+seed, bankRight2.length);
+  const i5 = seededIndex(seed+'note', bankNote.length);
+
+  document.getElementById('fortuneLeft').textContent   = bankLeft[i1];
+  document.getElementById('fortuneLeftSub').textContent= bankLeftSub[i2];
+  document.getElementById('fortuneRight1').textContent = bankRight[i3];
+  document.getElementById('fortuneRight2').textContent = bankRight2[i4];
+  document.getElementById('fortuneRightNote').textContent = bankNote[i5];
+
+  show('page-fortune');
+}
+
+/* ── 홀짝 ── */
+let randAnswer=Math.floor(Math.random()*3); // 0:홀, 1:짝, 2:없음
+function checkOdd(choice){
+  if(choice===randAnswer){show('page-oddeven5');}
+  else{show('page-oddeven4-2');}
+}
+function checkRetry(choice){
+  if(choice===1){show('page-oddeven5');}
+  else{show('page-oddeven4-3');}
+}
+
+/* ── 야바위(주관식 → 버튼으로 제출) ── */
+document.getElementById('cupBtn').addEventListener('click', ()=>{
+  const val=document.getElementById('cupInput').value.trim();
+  if(val.includes('마패')) show('page-cup2-right');
+  else if(val.length>0) show('page-cup2-wrong');
+});
+
+/* ★ change.mp4 끝나야 버튼 노출(최초 진입시에도 set) */
+document.addEventListener('DOMContentLoaded', ()=>{
+  const v = document.getElementById('vid-change');
+  const btn = document.getElementById('btn-change-next');
+  if(v){
+    btn.classList.add('hidden');
+    v.addEventListener('ended', ()=> btn.classList.remove('hidden'));
+  }
+});
+</script>
+</body>
+</html>
