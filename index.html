@@ -63,7 +63,7 @@
     display:flex;
     flex-wrap:wrap;
     justify-content:center;
-    gap:12px;
+    gap:10px;
     margin-top:10px;
   }
 
@@ -82,6 +82,38 @@
   button:active {transform:scale(.97);}
   .gold {color:var(--accent);}
 
+   /* 이미지 드래그 */
+  .drag-stage{
+  position:relative;
+  width:100%;
+  max-width:420px;
+  margin:0 auto 12px;
+  overflow:hidden;        /* 이 박스 밖으로 나간 부분은 잘려 보이게 */
+  touch-action:none;
+}
+
+.drag-stage .bg{
+  display:block;
+  width:100%;
+  height:auto;
+  user-select:none;
+  pointer-events:none;
+}
+
+/* 👇 선글라스 초기 위치 & 크기 조정하는 곳 */
+.drag-stage .drag{
+  position:absolute;
+  width:305px;           /* 선글라스 크기 */
+  left:65%;              /* 오른쪽쪽으로 갈수록 숫자 ↑ */
+  top:53%;               /* 아래로 내릴수록 숫자 ↑ */
+  user-select:none;
+  touch-action:none;
+  cursor:grab;
+}
+.drag-stage .drag:active{ cursor:grabbing; }
+
+
+
 @media (max-width:480px){
   input{width:90%;}
   button{
@@ -97,6 +129,8 @@
     padding: 5px;
   }
 }
+
+
   /* ================================
      📜 사주 ‘전통 책’ 스타일
   =================================*/
@@ -158,8 +192,15 @@
 
 <!-- 1) 첫 화면 -->
 <section id="page-start" class="active">
-  <!-- ★ 추가: 상단 이미지 -->
-  <img src="static/fate.png" alt="사주팔자"> <!-- ★ 수정 -->
+
+  <!-- 드래그 무대 -->
+  <div class="drag-stage" id="fateStage">
+  <!-- 고정 이미지 -->
+  <img class="bg" src="static/fate.png" alt="사주팔자">
+  <!-- 손가락으로 움직일 이미지 -->
+  <img class="drag" id="sunglass" src="static/sunglass.png" alt="sunglass">
+</div>
+
   <p>자네, 사주를 보러왔나?<br>주민번호 앞자리를 입력하면 내 인생팔자 다~알려주겠네.</p>
   <input id="birthInput" type="text" placeholder="입력하기" maxlength="6" inputmode="numeric"/>
   <div class="btns">
@@ -176,7 +217,6 @@
       <div class="page">
         <div class="page-inner">
           <div class="title-calligraphy">명식 요지</div>
-          <div class="divider"></div>
           <div id="fortuneLeft" class="fortune-line">—</div>
           <div class="note" id="fortuneLeftSub">—</div>
           <div class="seal">吉</div>
@@ -185,7 +225,6 @@
       <div class="page">
         <div class="page-inner">
           <div class="title-calligraphy">오늘의 기류</div>
-          <div class="divider"></div>
           <div id="fortuneRight1" class="fortune-line">—</div>
           <div id="fortuneRight2" class="fortune-line">—</div>
           <div class="note" id="fortuneRightNote">—</div>
@@ -491,9 +530,68 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 });
 </script>
+
+<script>
+(() => {
+  const stage = document.getElementById('fateStage');
+  const el    = document.getElementById('sunglass');
+  if (!stage || !el) return;
+
+  let dragging = false;
+  let grabDX = 0, grabDY = 0;  // 클릭 지점과 요소 좌상단의 차이
+  let stageRect;               // 무대 크기 캐시
+
+  function clamp(v, min, max){ return Math.max(min, Math.min(max, v)); }
+
+  el.addEventListener('pointerdown', (e) => {
+    // 스크롤/텍스트 선택 방지
+    e.preventDefault();
+
+    dragging = true;
+    el.setPointerCapture?.(e.pointerId);  // 있어도 되고 없어도 됨
+    stageRect = stage.getBoundingClientRect();
+
+    // 요소의 현재 위치(px) 기준으로 그랩 오프셋 계산
+    // (left/top이 %여도 offsetLeft/Top은 px로 들어옴)
+    grabDX = e.clientX - el.offsetLeft;
+    grabDY = e.clientY - el.offsetTop;
+
+    // 드래그 중 커서 스타일
+    el.style.cursor = 'grabbing';
+
+    // 전역에서 move/up을 받아 연속 드래그
+    window.addEventListener('pointermove', onMove, { passive:false });
+    window.addEventListener('pointerup', onUp, { once:true });
+    window.addEventListener('pointercancel', onUp, { once:true });
+  });
+
+  function onMove(e){
+    if (!dragging) return;
+    e.preventDefault();
+
+    // 새 좌표(px)
+    let x = e.clientX - grabDX;
+    let y = e.clientY - grabDY;
+
+    // 무대 안으로 제한 (원하면 해제해도 됨)
+    const maxX = stage.clientWidth  - el.clientWidth;
+    const maxY = stage.clientHeight - el.clientHeight;
+    x = clamp(x, 0, maxX);
+    y = clamp(y, 0, maxY);
+
+    el.style.left = x + 'px';
+    el.style.top  = y + 'px';
+  }
+
+  function onUp(){
+    dragging = false;
+    el.style.cursor = 'grab';
+    window.removeEventListener('pointermove', onMove);
+    // pointerup/cancel은 once:true로 자동 해제
+  }
+})();
+</script>
+
+
 </body>
 </html>
-
-
-
-
