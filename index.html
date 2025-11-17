@@ -264,6 +264,7 @@
     <!-- ★ 정답 분기 수정 -->
     <button onclick="show('page-oddeven1-wrong')">빨간색</button>  <!-- 빨간색 → 오답 화면 -->
     <button onclick="show('page-oddeven2')">검정색</button>        <!-- 검정색 → 다음 -->
+    <button onclick="show('page-what')">이전으로</button>  
   </div>
 </section>
 
@@ -282,6 +283,7 @@
     <button onclick="show('page-oddeven3-2')">네</button>
     <!-- ★ 아니요 → 오답 화면(다시 말하기로 복귀) -->
     <button onclick="show('page-oddeven2-wrong')">아니요</button>
+    <button onclick="show('page-oddeven1')">이전으로</button> 
   </div>
 </section>
 
@@ -299,6 +301,7 @@
   <div class="btns">
     <button onclick="show('page-oddeven4-1')">네</button>
     <button onclick="show('page-scared-odd')">아니요</button>
+    <button onclick="show('page-what')">다시 선택하기</button>  
   </div>
 </section>
 
@@ -349,6 +352,7 @@
   <img src="static/cup1-what.png" alt="">
   <input id="cupInput" type="text" placeholder="...을 찾고 있습니다.">
   <div class="btns"><button id="cupBtn">입력하기</button></div>
+  <button onclick="show('page-what')">이전으로</button>  
 </section>
 
 <!-- 야바위2 (정답) -->
@@ -599,4 +603,5 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
 </body>
 </html>
+
 
